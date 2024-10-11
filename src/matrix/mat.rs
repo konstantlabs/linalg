@@ -68,22 +68,6 @@ where
     pub fn cols(&self) -> usize {
         self.cols
     }
-
-    pub fn transpose(&self) -> Matrix<T> {
-        let mut transposed_data = Vec::with_capacity(self.rows * self.cols);
-
-        for col in 0..self.cols {
-            for row in 0..self.rows {
-                transposed_data.push(self.data[row * self.cols + col].clone());
-            }
-        }
-
-        Matrix {
-            rows: self.cols,
-            cols: self.rows,
-            data: transposed_data,
-        }
-    }
 }
 
 impl<T> Index<(usize, usize)> for Matrix<T>
