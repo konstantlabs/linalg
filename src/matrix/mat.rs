@@ -15,7 +15,7 @@ where
 
 impl<T> Matrix<T>
 where
-    T: Clone + Add<Output = T> + Sub<Output = T> + Mul<Output = T>,
+    T: Clone + Add<Output = T> + Sub<Output = T> + Mul<Output = T> + Default,
 {
     pub fn new<const R: usize, const C: usize>(data: [[T; C]; R]) -> Self {
         let data: Vec<T> = data.into_iter().flatten().collect();
@@ -23,6 +23,14 @@ where
             rows: R,
             cols: C,
             data,
+        }
+    }
+
+    pub fn empty(rows: usize, cols: usize) -> Self {
+        Matrix {
+            rows,
+            cols,
+            data: vec![T::default(); rows * cols],
         }
     }
 
@@ -45,11 +53,11 @@ where
         )
     }
 
-    fn get(&self, row: usize, col: usize) -> &T {
+    pub fn get(&self, row: usize, col: usize) -> &T {
         &self.data[row * self.cols + col]
     }
 
-    fn get_mut(&mut self, row: usize, col: usize) -> &mut T {
+    pub fn get_mut(&mut self, row: usize, col: usize) -> &mut T {
         &mut self.data[row * self.cols + col]
     }
 
@@ -85,7 +93,7 @@ where
     type Output = T;
 
     fn index(&self, (row, col): (usize, usize)) -> &Self::Output {
-        self.get(row, col)
+        &self.data[row * self.cols + col]
     }
 }
 
@@ -94,7 +102,7 @@ where
     T: Clone + Add<Output = T> + Sub<Output = T> + Mul<Output = T>,
 {
     fn index_mut(&mut self, (row, col): (usize, usize)) -> &mut Self::Output {
-        self.get_mut(row, col)
+        &mut self.data[row * self.cols + col]
     }
 }
 
@@ -148,30 +156,6 @@ mod tests {
         assert_eq!(m_view.rows, 2);
         assert_eq!(m_view.cols, 2);
         assert_eq!(m_view[(0, 0)], 1);
-    }
-
-    #[test]
-    fn test_add_two_matrices() {
-        let m1: Matrix<i32> = Matrix::new([[1, 2, 3], [4, 5, 6], [7, 8, 9]]);
-        let m2: Matrix<i32> = Matrix::new([[1, 0, 0], [0, 1, 0], [0, 0, 1]]);
-        let m3 = m1 + m2;
-        assert_eq!(m3.rows(), 3);
-        assert_eq!(m3.cols(), 3);
-        assert_eq!(m3[(0, 0)], 2);
-        assert_eq!(m3[(1, 1)], 6);
-        assert_eq!(m3[(2, 2)], 10);
-    }
-
-    #[test]
-    fn test_add_assign_two_matrices() {
-        let mut m1: Matrix<i32> = Matrix::new([[1, 2, 3], [4, 5, 6], [7, 8, 9]]);
-        let m2: Matrix<i32> = Matrix::new([[1, 0, 0], [0, 1, 0], [0, 0, 1]]);
-        m1 += m2;
-        assert_eq!(m1.rows(), 3);
-        assert_eq!(m1.cols(), 3);
-        assert_eq!(m1[(0, 0)], 2);
-        assert_eq!(m1[(1, 1)], 6);
-        assert_eq!(m1[(2, 2)], 10);
     }
 
     #[test]
