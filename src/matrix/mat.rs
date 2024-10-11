@@ -1,15 +1,16 @@
-use std::ops::{Add, AddAssign, Index, IndexMut, Mul, Range, Sub};
+use std::fmt;
+use std::ops::{Add, Index, IndexMut, Mul, Range, Sub};
 
-use crate::matrix_view::MatrixView;
+use super::mat_view::MatrixView;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Matrix<T>
 where
     T: Clone + Add<Output = T> + Sub<Output = T> + Mul<Output = T>,
 {
-    rows: usize,
-    cols: usize,
-    data: Vec<T>,
+    pub(crate) rows: usize,
+    pub(crate) cols: usize,
+    pub(crate) data: Vec<T>,
 }
 
 impl<T> Matrix<T>
@@ -25,7 +26,16 @@ where
         }
     }
 
-    pub fn view(&'_ self, row_range: Range<usize>, col_range: Range<usize>) -> MatrixView<'_, T> {
+    pub fn from_vec(rows: usize, cols: usize, data: Vec<T>) -> Self {
+        assert_eq!(
+            rows * cols,
+            data.len(),
+            "Data length must match rows * cols"
+        );
+        Matrix { rows, cols, data }
+    }
+
+    pub fn view(&self, row_range: Range<usize>, col_range: Range<usize>) -> MatrixView<'_, T> {
         let start = row_range.start * self.cols + col_range.start;
         let end = row_range.end * self.cols + col_range.end;
         MatrixView::new(
@@ -41,6 +51,30 @@ where
 
     fn get_mut(&mut self, row: usize, col: usize) -> &mut T {
         &mut self.data[row * self.cols + col]
+    }
+
+    pub fn rows(&self) -> usize {
+        self.rows
+    }
+
+    pub fn cols(&self) -> usize {
+        self.cols
+    }
+
+    pub fn transpose(&self) -> Matrix<T> {
+        let mut transposed_data = Vec::with_capacity(self.rows * self.cols);
+
+        for col in 0..self.cols {
+            for row in 0..self.rows {
+                transposed_data.push(self.data[row * self.cols + col].clone());
+            }
+        }
+
+        Matrix {
+            rows: self.cols,
+            cols: self.rows,
+            data: transposed_data,
+        }
     }
 }
 
@@ -64,55 +98,22 @@ where
     }
 }
 
-impl<T> Add for Matrix<T>
+impl<T> fmt::Display for Matrix<T>
 where
-    T: Clone + Add<Output = T> + Sub<Output = T> + Mul<Output = T>,
+    T: Clone + Add<Output = T> + Sub<Output = T> + Mul<Output = T> + fmt::Display,
 {
-    type Output = Matrix<T>;
-
-    fn add(self, other: Matrix<T>) -> Self::Output {
-        assert_eq!(
-            self.rows, other.rows,
-            "Matrices must have the same number of rows"
-        );
-        assert_eq!(
-            self.cols, other.cols,
-            "Matrices must have the same number of columns"
-        );
-
-        let data: Vec<T> = self
-            .data
-            .iter()
-            .zip(other.data.iter())
-            .map(|(a, b)| a.clone() + b.clone())
-            .collect();
-
-        Matrix {
-            rows: self.rows,
-            cols: self.cols,
-            data,
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        for row in 0..self.rows {
+            write!(f, "[")?;
+            for col in 0..self.cols {
+                if col > 0 {
+                    write!(f, ", ")?;
+                }
+                write!(f, "{}", self[(row, col)])?;
+            }
+            writeln!(f, "]")?;
         }
-    }
-}
-
-impl<T> AddAssign for Matrix<T>
-where
-    T: Clone + Add<Output = T> + Sub<Output = T> + Mul<Output = T> + AddAssign<T>,
-{
-    fn add_assign(&mut self, other: Matrix<T>) {
-        assert_eq!(
-            self.rows, other.rows,
-            "Matrices must have the same number of rows"
-        );
-        assert_eq!(
-            self.cols, other.cols,
-            "Matrices must have the same number of columns"
-        );
-
-        self.data
-            .iter_mut()
-            .zip(other.data.iter())
-            .for_each(|(a, b)| *a += b.clone());
+        Ok(())
     }
 }
 
@@ -123,8 +124,8 @@ mod tests {
     #[test]
     fn test_create_matrix() {
         let m: Matrix<i32> = Matrix::new([[1, 2, 3], [4, 5, 6], [7, 8, 9]]);
-        assert_eq!(m.cols, 3);
-        assert_eq!(m.rows, 3);
+        assert_eq!(m.cols(), 3);
+        assert_eq!(m.rows(), 3);
     }
 
     #[test]
@@ -154,8 +155,8 @@ mod tests {
         let m1: Matrix<i32> = Matrix::new([[1, 2, 3], [4, 5, 6], [7, 8, 9]]);
         let m2: Matrix<i32> = Matrix::new([[1, 0, 0], [0, 1, 0], [0, 0, 1]]);
         let m3 = m1 + m2;
-        assert_eq!(m3.rows, 3);
-        assert_eq!(m3.cols, 3);
+        assert_eq!(m3.rows(), 3);
+        assert_eq!(m3.cols(), 3);
         assert_eq!(m3[(0, 0)], 2);
         assert_eq!(m3[(1, 1)], 6);
         assert_eq!(m3[(2, 2)], 10);
@@ -166,10 +167,41 @@ mod tests {
         let mut m1: Matrix<i32> = Matrix::new([[1, 2, 3], [4, 5, 6], [7, 8, 9]]);
         let m2: Matrix<i32> = Matrix::new([[1, 0, 0], [0, 1, 0], [0, 0, 1]]);
         m1 += m2;
-        assert_eq!(m1.rows, 3);
-        assert_eq!(m1.cols, 3);
+        assert_eq!(m1.rows(), 3);
+        assert_eq!(m1.cols(), 3);
         assert_eq!(m1[(0, 0)], 2);
         assert_eq!(m1[(1, 1)], 6);
         assert_eq!(m1[(2, 2)], 10);
+    }
+
+    #[test]
+    fn test_subtract_two_matrices() {
+        let m1: Matrix<i32> = Matrix::new([[3, 2, 1], [6, 5, 4], [9, 8, 7]]);
+        let m2: Matrix<i32> = Matrix::new([[1, 0, 0], [0, 1, 0], [0, 0, 1]]);
+        let m3 = m1 - m2;
+        assert_eq!(m3.rows(), 3);
+        assert_eq!(m3.cols(), 3);
+        assert_eq!(m3[(0, 0)], 2);
+        assert_eq!(m3[(1, 1)], 4);
+        assert_eq!(m3[(2, 2)], 6);
+    }
+
+    #[test]
+    fn test_subtract_assign_two_matrices() {
+        let mut m1: Matrix<i32> = Matrix::new([[3, 2, 1], [6, 5, 4], [9, 8, 7]]);
+        let m2: Matrix<i32> = Matrix::new([[1, 0, 0], [0, 1, 0], [0, 0, 1]]);
+        m1 -= m2;
+        assert_eq!(m1.rows(), 3);
+        assert_eq!(m1.cols(), 3);
+        assert_eq!(m1[(0, 0)], 2);
+        assert_eq!(m1[(1, 1)], 4);
+        assert_eq!(m1[(2, 2)], 6);
+    }
+
+    #[test]
+    fn test_display_matrix() {
+        let m: Matrix<i32> = Matrix::new([[1, 2, 3], [4, 5, 6], [7, 8, 9]]);
+        let expected = "[1, 2, 3]\n[4, 5, 6]\n[7, 8, 9]\n";
+        assert_eq!(format!("{}", m), expected);
     }
 }
