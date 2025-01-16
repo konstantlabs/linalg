@@ -6,3 +6,11 @@ publish = false
 
 [lib]
 doctest = false
+
+[dev-dependencies]
+criterion = "0.5.1"
+
+[[bench]]
+name = "benchmark"
+harness = false
+path = "tests/benchmarks.rs"
