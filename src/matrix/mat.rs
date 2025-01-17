@@ -1,3 +1,4 @@
+use num_traits;
 use std::fmt;
 use std::ops::{Add, Index, IndexMut, Mul, Range, Sub};
 
@@ -31,6 +32,29 @@ where
             rows,
             cols,
             data: vec![T::default(); rows * cols],
+        }
+    }
+
+    pub fn identity(rows: usize, cols: usize) -> Self
+    where
+        T: num_traits::One + num_traits::Zero,
+    {
+        let mut data = vec![T::zero(); rows * cols];
+        let max_dim = std::cmp::min(rows, cols);
+        for i in 0..max_dim {
+            data[i * cols + i] = T::one();
+        }
+        Matrix { rows, cols, data }
+    }
+
+    pub fn zeros(rows: usize, cols: usize) -> Self
+    where
+        T: num_traits::Zero,
+    {
+        Matrix {
+            rows,
+            cols,
+            data: vec![T::zero(); rows * cols],
         }
     }
 
@@ -112,12 +136,24 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
+    use num::complex::Complex64;
 
     #[test]
     fn test_create_matrix() {
         let m: Matrix<i32> = Matrix::new([[1, 2, 3], [4, 5, 6], [7, 8, 9]]);
         assert_eq!(m.cols(), 3);
         assert_eq!(m.rows(), 3);
+    }
+
+    #[test]
+    fn test_complex_matrix() {
+        let m: Matrix<Complex64> = Matrix::new([
+            [Complex64::new(1.0, 1.0), Complex64::new(2.0, 2.0)],
+            [Complex64::new(3.0, 3.0), Complex64::new(4.0, 4.0)],
+        ]);
+
+        assert_eq!(m[(0, 0)], Complex64::new(1.0, 1.0));
+        assert_eq!(m[(0, 1)], Complex64::new(2.0, 2.0));
     }
 
     #[test]
@@ -171,5 +207,32 @@ mod tests {
         let m: Matrix<i32> = Matrix::new([[1, 2, 3], [4, 5, 6], [7, 8, 9]]);
         let expected = "[1, 2, 3]\n[4, 5, 6]\n[7, 8, 9]\n";
         assert_eq!(format!("{}", m), expected);
+    }
+
+    #[test]
+    fn test_zeros() {
+        let m: Matrix<u32> = Matrix::zeros(3, 3);
+        assert_eq!(m.data, vec![0, 0, 0, 0, 0, 0, 0, 0, 0]);
+    }
+
+    #[test]
+    fn test_complex_zeros() {
+        let m: Matrix<Complex64> = Matrix::zeros(2, 2);
+        assert_eq!(m[(0, 0)], Complex64::new(0.0, 0.0));
+    }
+
+    #[test]
+    fn test_identity() {
+        let m: Matrix<u32> = Matrix::identity(3, 3);
+        assert_eq!(m.data, vec![1, 0, 0, 0, 1, 0, 0, 0, 1]);
+    }
+
+    #[test]
+    fn test_complex_identity() {
+        let m: Matrix<Complex64> = Matrix::identity(2, 2);
+        assert_eq!(m[(0, 0)], Complex64::new(1.0, 0.0));
+        assert_eq!(m[(0, 1)], Complex64::new(0.0, 0.0));
+        assert_eq!(m[(1, 0)], Complex64::new(0.0, 0.0));
+        assert_eq!(m[(1, 1)], Complex64::new(1.0, 0.0));
     }
 }
