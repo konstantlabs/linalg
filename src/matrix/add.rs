@@ -1,6 +1,29 @@
 use super::mat::Matrix;
 use std::ops::{Add, AddAssign, Mul, Sub};
 
+fn add_matrix_impl<'a, T>(m1: &'a Matrix<T>, m2: &'a Matrix<T>) -> Matrix<T>
+where
+    T: Clone + Add<Output = T> + Sub<Output = T> + Mul<Output = T> + Default,
+{
+    assert_eq!(
+        m1.rows, m2.rows,
+        "Matrices must have the same number of rows"
+    );
+    assert_eq!(
+        m1.cols, m2.cols,
+        "Matrices must have the same number of columns"
+    );
+
+    let data: Vec<T> = m1
+        .data
+        .iter()
+        .zip(&m2.data)
+        .map(|(a, b)| a.clone() + b.clone())
+        .collect();
+
+    Matrix::from_vec(m1.rows, m1.cols, data)
+}
+
 impl<T> Add for Matrix<T>
 where
     T: Clone + Add<Output = T> + Sub<Output = T> + Mul<Output = T> + Default,
@@ -8,23 +31,7 @@ where
     type Output = Matrix<T>;
 
     fn add(self, other: Matrix<T>) -> Self::Output {
-        assert_eq!(
-            self.rows, other.rows,
-            "Matrices must have the same number of rows"
-        );
-        assert_eq!(
-            self.cols, other.cols,
-            "Matrices must have the same number of columns"
-        );
-
-        let data: Vec<T> = self
-            .data
-            .iter()
-            .zip(&other.data)
-            .map(|(a, b)| a.clone() + b.clone())
-            .collect();
-
-        Matrix::from_vec(self.rows, self.cols, data)
+        add_matrix_impl(&self, &other)
     }
 }
 
@@ -35,23 +42,7 @@ where
     type Output = Matrix<T>;
 
     fn add(self, other: &Matrix<T>) -> Self::Output {
-        assert_eq!(
-            self.rows, other.rows,
-            "Matrices must have the same number of rows"
-        );
-        assert_eq!(
-            self.cols, other.cols,
-            "Matrices must have the same number of columns"
-        );
-
-        let data: Vec<T> = self
-            .data
-            .iter()
-            .zip(&other.data)
-            .map(|(a, b)| a.clone() + b.clone())
-            .collect();
-
-        Matrix::from_vec(self.rows, self.cols, data)
+        add_matrix_impl(self, other)
     }
 }
 

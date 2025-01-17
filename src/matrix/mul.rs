@@ -1,6 +1,27 @@
 use super::mat::Matrix;
 use std::ops::{Add, Mul, Sub};
 
+fn multiply_matrices<T>(lhs: &Matrix<T>, rhs: &Matrix<T>) -> Matrix<T>
+where
+    T: Clone + Add<Output = T> + Sub<Output = T> + Mul<Output = T> + Default,
+{
+    assert_eq!(lhs.cols(), rhs.rows(), "Incompatible matrix dimensions");
+
+    let rows = lhs.rows();
+    let cols = rhs.cols();
+    let mut result: Matrix<T> = Matrix::empty(rows, cols);
+
+    for i in 0..rows {
+        for j in 0..cols {
+            for k in 0..lhs.cols() {
+                result[(i, j)] = result[(i, j)].clone() + lhs[(i, k)].clone() * rhs[(k, j)].clone();
+            }
+        }
+    }
+
+    result
+}
+
 impl<T> Mul<T> for Matrix<T>
 where
     T: Clone + Add<Output = T> + Sub<Output = T> + Mul<Output = T> + Default,
@@ -16,6 +37,17 @@ where
     }
 }
 
+impl<T> Mul<&T> for Matrix<T>
+where
+    T: Clone + Add<Output = T> + Sub<Output = T> + Mul<Output = T> + Default,
+{
+    type Output = Matrix<T>;
+
+    fn mul(self, rhs: &T) -> Self::Output {
+        self * rhs.clone()
+    }
+}
+
 impl<T> Mul<Matrix<T>> for Matrix<T>
 where
     T: Clone + Add<Output = T> + Sub<Output = T> + Mul<Output = T> + Default,
@@ -23,22 +55,40 @@ where
     type Output = Matrix<T>;
 
     fn mul(self, rhs: Matrix<T>) -> Self::Output {
-        assert_eq!(self.cols(), rhs.rows(), "Incompatible matrix dimensions");
+        multiply_matrices(&self, &rhs)
+    }
+}
 
-        let rows = self.rows();
-        let cols = rhs.cols();
-        let mut result: Matrix<T> = Matrix::empty(rows, cols);
+impl<T> Mul<&Matrix<T>> for Matrix<T>
+where
+    T: Clone + Add<Output = T> + Sub<Output = T> + Mul<Output = T> + Default,
+{
+    type Output = Matrix<T>;
 
-        for i in 0..rows {
-            for j in 0..cols {
-                for k in 0..self.cols() {
-                    result[(i, j)] =
-                        result[(i, j)].clone() + self[(i, k)].clone() * rhs[(k, j)].clone();
-                }
-            }
-        }
+    fn mul(self, rhs: &Matrix<T>) -> Self::Output {
+        multiply_matrices(&self, rhs)
+    }
+}
 
-        result
+impl<T> Mul<Matrix<T>> for &Matrix<T>
+where
+    T: Clone + Add<Output = T> + Sub<Output = T> + Mul<Output = T> + Default,
+{
+    type Output = Matrix<T>;
+
+    fn mul(self, rhs: Matrix<T>) -> Self::Output {
+        multiply_matrices(self, &rhs)
+    }
+}
+
+impl<T> Mul<&Matrix<T>> for &Matrix<T>
+where
+    T: Clone + Add<Output = T> + Sub<Output = T> + Mul<Output = T> + Default,
+{
+    type Output = Matrix<T>;
+
+    fn mul(self, rhs: &Matrix<T>) -> Self::Output {
+        multiply_matrices(self, rhs)
     }
 }
 
@@ -91,5 +141,29 @@ mod tests {
         let m1 = Matrix::new([[1, 2], [3, 4]]);
         let m2 = Matrix::new([[5, 6, 7], [8, 9, 10], [11, 12, 13]]);
         let _ = m1 * m2;
+    }
+
+    #[test]
+    fn test_matrix_ref_multiplication() {
+        let m1 = Matrix::new([[1, 2], [3, 4]]);
+        let m2 = Matrix::new([[5, 6], [7, 8]]);
+        let result = &m1 * &m2;
+        assert_eq!(result.data, vec![19, 22, 43, 50]);
+    }
+
+    #[test]
+    fn test_matrix_owned_ref_multiplication() {
+        let m1 = Matrix::new([[1, 2], [3, 4]]);
+        let m2 = Matrix::new([[5, 6], [7, 8]]);
+        let result = m1 * &m2;
+        assert_eq!(result.data, vec![19, 22, 43, 50]);
+    }
+
+    #[test]
+    fn test_matrix_ref_owned_multiplication() {
+        let m1 = Matrix::new([[1, 2], [3, 4]]);
+        let m2 = Matrix::new([[5, 6], [7, 8]]);
+        let result = &m1 * m2;
+        assert_eq!(result.data, vec![19, 22, 43, 50]);
     }
 }
