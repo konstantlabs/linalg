@@ -14,3 +14,8 @@ criterion = "0.5.1"
 name = "benchmark"
 harness = false
 path = "tests/benchmarks.rs"
+
+[dependencies]
+num = "0.4.3"
+num-traits = "0.2.19"
+rand = "0.8.5"
