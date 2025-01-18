@@ -19,11 +19,11 @@ where
     T: Clone + Add<Output = T> + Sub<Output = T> + Mul<Output = T> + Default,
 {
     pub fn new<const R: usize, const C: usize>(data: [[T; C]; R]) -> Self {
-        let data: Vec<T> = data.into_iter().flatten().collect();
+        let vec: Vec<T> = data.into_iter().flatten().collect();
         Matrix {
             rows: R,
             cols: C,
-            data,
+            data: vec,
         }
     }
 
