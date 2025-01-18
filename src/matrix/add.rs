@@ -1,9 +1,63 @@
 use super::mat::Matrix;
-use std::ops::{Add, AddAssign, Mul, Sub};
+use aligned_vec::AVec;
+use crossbeam_utils::CachePadded;
+use std::{
+    ops::{Add, AddAssign, Mul, Sub},
+    sync::{atomic::AtomicBool, Once},
+};
+
+#[cfg(target_arch = "x86_64")]
+use std::arch::x86_64::*;
+
+static CPU_FEATURES: CachePadded<AtomicBool> = CachePadded::new(AtomicBool::new(false));
+static CPU_FEATURES_INIT: Once = Once::new();
+
+const PARALLEL_THRESHOLD: usize = 1024 * 64; // 64KB of f32 data
+const SIMD_THRESHOLD: usize = 32; // Minimum elements for SIMD to be worth it
+const CACHE_LINE_SIZE: usize = 64; // Common cache line size
+
+trait SimdOps: Sized {
+    type Vector;
+    const LANE_SIZE: usize;
+
+    #[cfg(target_arch = "x86_64")]
+    unsafe fn load(ptr: *const Self) -> Self::Vector;
+
+    #[cfg(target_arch = "x86_64")]
+    unsafe fn store(ptr: *mut Self, vec: Self::Vector);
+
+    #[cfg(target_arch = "x86_64")]
+    unsafe fn add(a: Self::Vector, b: Self::Vector) -> Self::Vector;
+
+    fn has_simd_support() -> bool;
+}
+
+// x86_64 implementations (AVX2)
+#[cfg(target_arch = "x86_64")]
+impl SimdOps for f32 {
+    type Vector = __m256;
+    const LANE_SIZE: usize = 8;
+
+    fn has_simd_support() -> bool {
+        is_x86_feature_detected!("avx2")
+    }
+
+    unsafe fn load(ptr: *const Self) -> Self::Vector {
+        _mm256_loadu_ps(ptr)
+    }
+
+    unsafe fn store(ptr: *mut Self, vec: Self::Vector) {
+        _mm256_storeu_ps(ptr, vec)
+    }
+
+    unsafe fn add(a: Self::Vector, b: Self::Vector) -> Self::Vector {
+        _mm256_add_ps(a, b)
+    }
+}
 
 fn add_matrix_impl<'a, T>(m1: &'a Matrix<T>, m2: &'a Matrix<T>) -> Matrix<T>
 where
-    T: Clone + Add<Output = T> + Sub<Output = T> + Mul<Output = T> + Default,
+    T: Clone + Add<Output = T> + Sub<Output = T> + Mul<Output = T> + Default + SimdOps,
 {
     assert_eq!(
         m1.rows, m2.rows,
@@ -14,6 +68,13 @@ where
         "Matrices must have the same number of columns"
     );
 
+    add_scalar(m1, m2)
+}
+
+fn add_scalar<T>(m1: &Matrix<T>, m2: &Matrix<T>) -> Matrix<T>
+where
+    T: Clone + Add<Output = T> + Sub<Output = T> + Mul<Output = T> + Default,
+{
     let data: Vec<T> = m1
         .data
         .iter()
@@ -26,7 +87,7 @@ where
 
 impl<T> Add for Matrix<T>
 where
-    T: Clone + Add<Output = T> + Sub<Output = T> + Mul<Output = T> + Default,
+    T: Clone + Add<Output = T> + Sub<Output = T> + Mul<Output = T> + Default + SimdOps,
 {
     type Output = Matrix<T>;
 
@@ -37,7 +98,7 @@ where
 
 impl<T> Add for &Matrix<T>
 where
-    T: Clone + Add<Output = T> + Sub<Output = T> + Mul<Output = T> + Default,
+    T: Clone + Add<Output = T> + Sub<Output = T> + Mul<Output = T> + Default + SimdOps,
 {
     type Output = Matrix<T>;
 

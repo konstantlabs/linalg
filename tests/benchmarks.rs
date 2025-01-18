@@ -13,6 +13,17 @@ fn add_2x2_matrices(c: &mut Criterion) {
     });
 }
 
+fn add_512x512_matrices(c: &mut Criterion) {
+    use rand::{thread_rng, Rng};
+    let mut rng = thread_rng();
+    let m1: Matrix<f32> = Matrix::new([[rng.gen_range(-100.0..100.0); 512]; 512]);
+    let m2: Matrix<f32> = Matrix::new([[rng.gen_range(-100.0..100.0); 512]; 512]);
+
+    c.bench_function("add 512x512 matrices", |b| {
+        b.iter(|| black_box(&m1) + black_box(&m2))
+    });
+}
+
 fn mul_3x3_matrices(c: &mut Criterion) {
     let m1: Matrix<i32> = Matrix::new([[2, 2, 2], [2, 2, 2], [2, 2, 2]]);
     let m2: Matrix<i32> = Matrix::new([[2, 2, 2], [2, 2, 2], [2, 2, 2]]);
@@ -55,7 +66,7 @@ criterion_group! {
     name = benches;
     config = Criterion::default().measurement_time(Duration::from_secs(30));
     // targets = add_2x2_matrices, mul_3x3_matrices, mul_3x3_complex32_matrices, mul_3x3_complex64_matrices, mul_512x512_matrices
-    targets = mul_512x512_matrices
+    targets = add_512x512_matrices
 }
 
 criterion_main!(benches);
