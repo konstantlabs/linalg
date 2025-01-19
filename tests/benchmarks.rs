@@ -65,7 +65,7 @@ fn mul_3x3_complex64_matrices(c: &mut Criterion) {
 criterion_group! {
     name = benches;
     config = Criterion::default().measurement_time(Duration::from_secs(30));
-    // targets = add_2x2_matrices, mul_3x3_matrices, mul_3x3_complex32_matrices, mul_3x3_complex64_matrices, mul_512x512_matrices
+    // targets = add_2x2_matrices, mul_3x3_matrices, mul_3x3_complex32_matrices, mul_3x3_complex64_matrices, mul_512x512_matrices,
     targets = add_512x512_matrices
 }
 
