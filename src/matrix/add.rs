@@ -4,7 +4,7 @@ use rayon::prelude::*;
 use std::arch::x86_64::*;
 use std::ops::{Add, AddAssign, Mul, Sub};
 
-const SIMD_THRESHOLD: usize = 1; // Minimum elements for SIMD to be worth it
+const SIMD_THRESHOLD: usize = 512 * 512; // Minimum elements for SIMD to be worth it
 
 trait SimdOps: Sized {
     type Vector;
@@ -43,6 +43,29 @@ impl SimdOps for f32 {
 
     unsafe fn add(a: Self::Vector, b: Self::Vector) -> Self::Vector {
         _mm256_add_ps(a, b)
+    }
+}
+
+// x86_64 implementations (AVX2)
+#[cfg(target_arch = "x86_64")]
+impl SimdOps for f64 {
+    type Vector = __m256d;
+    const LANE_SIZE: usize = 8;
+
+    fn has_simd_support() -> bool {
+        is_x86_feature_detected!("avx2")
+    }
+
+    unsafe fn load(ptr: *const Self) -> Self::Vector {
+        _mm256_loadu_pd(ptr)
+    }
+
+    unsafe fn store(ptr: *mut Self, vec: Self::Vector) {
+        _mm256_storeu_pd(ptr, vec)
+    }
+
+    unsafe fn add(a: Self::Vector, b: Self::Vector) -> Self::Vector {
+        _mm256_add_pd(a, b)
     }
 }
 
