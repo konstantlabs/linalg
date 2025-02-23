@@ -151,11 +151,11 @@ where
     result.set_len(total_elements);
 
     result
-        .par_chunks_mut(1024)
-        .zip(m1.data.par_chunks(1024))
-        .zip(m2.data.par_chunks(1024))
+        .par_chunks_mut(T::LANE_SIZE * 128)
+        .zip(m1.data.par_chunks(T::LANE_SIZE * 128))
+        .zip(m2.data.par_chunks(T::LANE_SIZE * 128))
         .for_each(|((r, a), b)| {
-            let chunks = r.len() / 8;
+            let chunks = r.len() / T::LANE_SIZE;
             // let (_prefix, _aligned, _suffix) = r.align_to_mut::<__m256>();
 
             for i in 0..chunks {
@@ -166,7 +166,7 @@ where
                 T::store(r[offset..].as_mut_ptr(), sum);
             }
 
-            let remaining_start = chunks * 8;
+            let remaining_start = chunks * T::LANE_SIZE;
             for i in remaining_start..r.len() {
                 r[i] = a[i].clone() + b[i].clone();
             }
