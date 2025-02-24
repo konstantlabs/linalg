@@ -1,7 +1,10 @@
 use super::mat::Matrix;
+use num::complex::{Complex32, Complex64};
 use rayon::prelude::*;
+
 #[cfg(target_arch = "x86_64")]
 use std::arch::x86_64::*;
+
 use std::ops::{Add, AddAssign, Mul, Sub};
 
 const SIMD_THRESHOLD: usize = 512 * 512; // Minimum elements for SIMD to be worth it
@@ -91,6 +94,102 @@ impl SimdOps for i32 {
     }
 }
 
+#[cfg(target_arch = "x86_64")]
+impl SimdOps for Complex32 {
+    type Vector = (__m256, __m256);
+    const LANE_SIZE: usize = 4;
+
+    fn has_simd_support() -> bool {
+        is_x86_feature_detected!("avx2")
+    }
+
+    unsafe fn load(ptr: *const Self) -> Self::Vector {
+        let real_ptr = ptr as *const f32;
+        let imag_ptr = real_ptr.add(1);
+
+        let mut real_array = [0.0f32; 8];
+        let mut imag_array = [0.0f32; 8];
+
+        for i in 0..4 {
+            real_array[i] = *real_ptr.add(i * 2);
+            imag_array[i] = *imag_ptr.add(i * 2);
+        }
+
+        (
+            _mm256_loadu_ps(real_array.as_ptr()),
+            _mm256_loadu_ps(imag_array.as_ptr()),
+        )
+    }
+
+    unsafe fn store(ptr: *mut Self, vec: Self::Vector) {
+        let mut real_array = [0.0f32; 8];
+        let mut imag_array = [0.0f32; 8];
+
+        _mm256_storeu_ps(real_array.as_mut_ptr(), vec.0);
+        _mm256_storeu_ps(imag_array.as_mut_ptr(), vec.1);
+
+        let real_ptr = ptr as *mut f32;
+        let imag_ptr = real_ptr.add(1);
+
+        for i in 0..4 {
+            *real_ptr.add(i * 2) = real_array[i];
+            *imag_ptr.add(i * 2) = imag_array[i];
+        }
+    }
+
+    unsafe fn add(a: Self::Vector, b: Self::Vector) -> Self::Vector {
+        (_mm256_add_ps(a.0, b.0), _mm256_add_ps(a.1, b.1))
+    }
+}
+
+#[cfg(target_arch = "x86_64")]
+impl SimdOps for Complex64 {
+    type Vector = (__m256d, __m256d);
+    const LANE_SIZE: usize = 2;
+
+    fn has_simd_support() -> bool {
+        is_x86_feature_detected!("avx2")
+    }
+
+    unsafe fn load(ptr: *const Self) -> Self::Vector {
+        let real_ptr = ptr as *const f64;
+        let imag_ptr = real_ptr.add(1);
+
+        let mut real_array = [0.0f64; 4];
+        let mut imag_array = [0.0f64; 4];
+
+        for i in 0..2 {
+            real_array[i] = *real_ptr.add(i * 2);
+            imag_array[i] = *imag_ptr.add(i * 2);
+        }
+
+        (
+            _mm256_loadu_pd(real_array.as_ptr()),
+            _mm256_loadu_pd(imag_array.as_ptr()),
+        )
+    }
+
+    unsafe fn store(ptr: *mut Self, vec: Self::Vector) {
+        let mut real_array = [0.0f64; 4];
+        let mut imag_array = [0.0f64; 4];
+
+        _mm256_storeu_pd(real_array.as_mut_ptr(), vec.0);
+        _mm256_storeu_pd(imag_array.as_mut_ptr(), vec.1);
+
+        let real_ptr = ptr as *mut f64;
+        let imag_ptr = real_ptr.add(1);
+
+        for i in 0..2 {
+            *real_ptr.add(i * 2) = real_array[i];
+            *imag_ptr.add(i * 2) = imag_array[i];
+        }
+    }
+
+    unsafe fn add(a: Self::Vector, b: Self::Vector) -> Self::Vector {
+        (_mm256_add_pd(a.0, b.0), _mm256_add_pd(a.1, b.1))
+    }
+}
+
 fn add_matrix_impl<'a, T>(m1: &'a Matrix<T>, m2: &'a Matrix<T>) -> Matrix<T>
 where
     T: Clone
@@ -156,10 +255,9 @@ where
         .zip(m2.data.par_chunks(T::LANE_SIZE * 128))
         .for_each(|((r, a), b)| {
             let chunks = r.len() / T::LANE_SIZE;
-            // let (_prefix, _aligned, _suffix) = r.align_to_mut::<__m256>();
 
             for i in 0..chunks {
-                let offset = i * 8;
+                let offset = i * T::LANE_SIZE;
                 let m1_vec = T::load(a[offset..].as_ptr());
                 let m2_vec = T::load(b[offset..].as_ptr());
                 let sum = <T as SimdOps>::add(m1_vec, m2_vec);
@@ -173,6 +271,42 @@ where
         });
 
     Matrix::from_vec(m1.rows, m1.cols, result)
+}
+
+fn add_assign_matrix_impl<T>(m1: &mut Matrix<T>, m2: &Matrix<T>)
+where
+    T: Clone
+        + Add<Output = T>
+        + Sub<Output = T>
+        + Mul<Output = T>
+        + AddAssign
+        + Default
+        + SimdOps
+        + Send
+        + Sync,
+{
+    assert_eq!(
+        m1.rows, m2.rows,
+        "Matrices must have the same number of rows"
+    );
+    assert_eq!(
+        m1.cols, m2.cols,
+        "Matrices must have the same number of columns"
+    );
+
+    // let total_elements = m1.rows * m1.cols;
+    // TODO: implement add assign simd
+    add_assign_scalar(m1, m2);
+}
+
+fn add_assign_scalar<T>(m1: &mut Matrix<T>, m2: &Matrix<T>)
+where
+    T: Clone + Add<Output = T> + Sub<Output = T> + Mul<Output = T> + AddAssign<T> + Default,
+{
+    m1.data
+        .iter_mut()
+        .zip(&m2.data)
+        .for_each(|(a, b)| *a += b.clone());
 }
 
 impl<T> Add for Matrix<T>
@@ -213,7 +347,15 @@ where
 
 impl<T> AddAssign for Matrix<T>
 where
-    T: Clone + Add<Output = T> + Sub<Output = T> + Mul<Output = T> + AddAssign<T>,
+    T: Clone
+        + Add<Output = T>
+        + Sub<Output = T>
+        + Mul<Output = T>
+        + AddAssign<T>
+        + Default
+        + SimdOps
+        + Send
+        + Sync,
 {
     fn add_assign(&mut self, other: Matrix<T>) {
         assert_eq!(
@@ -225,10 +367,7 @@ where
             "Matrices must have the same number of columns"
         );
 
-        self.data
-            .iter_mut()
-            .zip(other.data)
-            .for_each(|(a, b)| *a += b);
+        add_assign_matrix_impl(self, &other);
     }
 }
 
@@ -261,18 +400,18 @@ mod tests {
         assert_eq!(m3[(2, 2)], 10);
     }
 
-    // #[test]
-    // fn test_add_two_complex_matrix_refs() {
-    //     let m1: Matrix<Complex32> = Matrix::new([[Complex32::new(2.0, 0.0); 3]; 3]);
-    //     let m2: Matrix<Complex32> = Matrix::new([[Complex32::new(2.0, 0.0); 3]; 3]);
+    #[test]
+    fn test_add_two_complex_matrix_refs() {
+        let m1: Matrix<Complex32> = Matrix::new([[Complex32::new(2.0, 0.0); 3]; 3]);
+        let m2: Matrix<Complex32> = Matrix::new([[Complex32::new(2.0, 0.0); 3]; 3]);
 
-    //     let m3 = &m1 + &m2;
-    //     assert_eq!(m3.rows(), 3);
-    //     assert_eq!(m3.cols(), 3);
-    //     assert_eq!(m3[(0, 0)], Complex32::new(4.0, 0.0)); // 2 + 2 = 4
-    //     assert_eq!(m3[(1, 1)], Complex32::new(4.0, 0.0)); // 2 + 2 = 4
-    //     assert_eq!(m3[(2, 2)], Complex32::new(4.0, 0.0)); // 2 + 2 = 4
-    // }
+        let m3 = &m1 + &m2;
+        assert_eq!(m3.rows(), 3);
+        assert_eq!(m3.cols(), 3);
+        assert_eq!(m3[(0, 0)], Complex32::new(4.0, 0.0)); // 2 + 2 = 4
+        assert_eq!(m3[(1, 1)], Complex32::new(4.0, 0.0)); // 2 + 2 = 4
+        assert_eq!(m3[(2, 2)], Complex32::new(4.0, 0.0)); // 2 + 2 = 4
+    }
 
     #[test]
     fn test_add_assign_two_matrices() {
@@ -284,5 +423,51 @@ mod tests {
         assert_eq!(m1[(0, 0)], 2);
         assert_eq!(m1[(1, 1)], 6);
         assert_eq!(m1[(2, 2)], 10);
+    }
+
+    #[test]
+    fn test_large_matrix_complex32_add() {
+        let size = 1024;
+        let data1 = vec![Complex32::new(1.0, 0.0); size * size];
+        let data2 = vec![Complex32::new(2.0, 0.0); size * size];
+        let m1 = Matrix::from_vec(size, size, data1);
+        let m2 = Matrix::from_vec(size, size, data2);
+        let m3 = &m1 + &m2;
+        assert_eq!(m3.rows(), size);
+        assert_eq!(m3.cols(), size);
+        assert_eq!(m3[(0, 0)], Complex32::new(3.0, 0.0));
+        assert_eq!(m3[(size - 1, size - 1)], Complex32::new(3.0, 0.0));
+
+        // Test some random positions
+        use rand::Rng;
+        let mut rng = rand::thread_rng();
+        for _ in 0..100 {
+            let row = rng.gen_range(0..size);
+            let col = rng.gen_range(0..size);
+            assert_eq!(m3[(row, col)], Complex32::new(3.0, 0.0));
+        }
+    }
+
+    #[test]
+    fn test_large_matrix_complex64_add() {
+        let size = 1024;
+        let data1 = vec![Complex64::new(1.0, 0.0); size * size];
+        let data2 = vec![Complex64::new(2.0, 0.0); size * size];
+        let m1 = Matrix::from_vec(size, size, data1);
+        let m2 = Matrix::from_vec(size, size, data2);
+        let m3 = &m1 + &m2;
+        assert_eq!(m3.rows(), size);
+        assert_eq!(m3.cols(), size);
+        assert_eq!(m3[(0, 0)], Complex64::new(3.0, 0.0));
+        assert_eq!(m3[(size - 1, size - 1)], Complex64::new(3.0, 0.0));
+
+        // Test some random positions
+        use rand::Rng;
+        let mut rng = rand::thread_rng();
+        for _ in 0..100 {
+            let row = rng.gen_range(0..size);
+            let col = rng.gen_range(0..size);
+            assert_eq!(m3[(row, col)], Complex64::new(3.0, 0.0));
+        }
     }
 }
