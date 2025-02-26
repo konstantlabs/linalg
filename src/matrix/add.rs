@@ -1,5 +1,5 @@
 use super::mat::Matrix;
-use num::complex::{Complex32, Complex64};
+use num::complex::{Complex32 as c32, Complex64 as c64};
 use rayon::prelude::*;
 
 #[cfg(target_arch = "x86_64")]
@@ -95,7 +95,7 @@ impl SimdOps for i32 {
 }
 
 #[cfg(target_arch = "x86_64")]
-impl SimdOps for Complex32 {
+impl SimdOps for c32 {
     type Vector = (__m256, __m256);
     const LANE_SIZE: usize = 4;
 
@@ -143,7 +143,7 @@ impl SimdOps for Complex32 {
 }
 
 #[cfg(target_arch = "x86_64")]
-impl SimdOps for Complex64 {
+impl SimdOps for c64 {
     type Vector = (__m256d, __m256d);
     const LANE_SIZE: usize = 2;
 
@@ -374,7 +374,6 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    // use num::complex::Complex32;
 
     #[test]
     fn test_add_two_matrices() {
@@ -402,15 +401,15 @@ mod tests {
 
     #[test]
     fn test_add_two_complex_matrix_refs() {
-        let m1: Matrix<Complex32> = Matrix::new([[Complex32::new(2.0, 0.0); 3]; 3]);
-        let m2: Matrix<Complex32> = Matrix::new([[Complex32::new(2.0, 0.0); 3]; 3]);
+        let m1: Matrix<c32> = Matrix::new([[c32::new(2.0, 0.0); 3]; 3]);
+        let m2: Matrix<c32> = Matrix::new([[c32::new(2.0, 0.0); 3]; 3]);
 
         let m3 = &m1 + &m2;
         assert_eq!(m3.rows(), 3);
         assert_eq!(m3.cols(), 3);
-        assert_eq!(m3[(0, 0)], Complex32::new(4.0, 0.0)); // 2 + 2 = 4
-        assert_eq!(m3[(1, 1)], Complex32::new(4.0, 0.0)); // 2 + 2 = 4
-        assert_eq!(m3[(2, 2)], Complex32::new(4.0, 0.0)); // 2 + 2 = 4
+        assert_eq!(m3[(0, 0)], c32::new(4.0, 0.0)); // 2 + 2 = 4
+        assert_eq!(m3[(1, 1)], c32::new(4.0, 0.0)); // 2 + 2 = 4
+        assert_eq!(m3[(2, 2)], c32::new(4.0, 0.0)); // 2 + 2 = 4
     }
 
     #[test]
@@ -428,15 +427,15 @@ mod tests {
     #[test]
     fn test_large_matrix_complex32_add() {
         let size = 1024;
-        let data1 = vec![Complex32::new(1.0, 0.0); size * size];
-        let data2 = vec![Complex32::new(2.0, 0.0); size * size];
+        let data1 = vec![c32::new(1.0, 0.0); size * size];
+        let data2 = vec![c32::new(2.0, 0.0); size * size];
         let m1 = Matrix::from_vec(size, size, data1);
         let m2 = Matrix::from_vec(size, size, data2);
         let m3 = &m1 + &m2;
         assert_eq!(m3.rows(), size);
         assert_eq!(m3.cols(), size);
-        assert_eq!(m3[(0, 0)], Complex32::new(3.0, 0.0));
-        assert_eq!(m3[(size - 1, size - 1)], Complex32::new(3.0, 0.0));
+        assert_eq!(m3[(0, 0)], c32::new(3.0, 0.0));
+        assert_eq!(m3[(size - 1, size - 1)], c32::new(3.0, 0.0));
 
         // Test some random positions
         use rand::Rng;
@@ -444,22 +443,22 @@ mod tests {
         for _ in 0..100 {
             let row = rng.gen_range(0..size);
             let col = rng.gen_range(0..size);
-            assert_eq!(m3[(row, col)], Complex32::new(3.0, 0.0));
+            assert_eq!(m3[(row, col)], c32::new(3.0, 0.0));
         }
     }
 
     #[test]
     fn test_large_matrix_complex64_add() {
         let size = 1024;
-        let data1 = vec![Complex64::new(1.0, 0.0); size * size];
-        let data2 = vec![Complex64::new(2.0, 0.0); size * size];
+        let data1 = vec![c64::new(1.0, 0.0); size * size];
+        let data2 = vec![c64::new(2.0, 0.0); size * size];
         let m1 = Matrix::from_vec(size, size, data1);
         let m2 = Matrix::from_vec(size, size, data2);
         let m3 = &m1 + &m2;
         assert_eq!(m3.rows(), size);
         assert_eq!(m3.cols(), size);
-        assert_eq!(m3[(0, 0)], Complex64::new(3.0, 0.0));
-        assert_eq!(m3[(size - 1, size - 1)], Complex64::new(3.0, 0.0));
+        assert_eq!(m3[(0, 0)], c64::new(3.0, 0.0));
+        assert_eq!(m3[(size - 1, size - 1)], c64::new(3.0, 0.0));
 
         // Test some random positions
         use rand::Rng;
@@ -467,7 +466,7 @@ mod tests {
         for _ in 0..100 {
             let row = rng.gen_range(0..size);
             let col = rng.gen_range(0..size);
-            assert_eq!(m3[(row, col)], Complex64::new(3.0, 0.0));
+            assert_eq!(m3[(row, col)], c64::new(3.0, 0.0));
         }
     }
 }

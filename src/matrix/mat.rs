@@ -136,7 +136,7 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use num::complex::Complex64;
+    use num::complex::Complex64 as c64;
 
     #[test]
     fn test_create_matrix() {
@@ -147,13 +147,13 @@ mod tests {
 
     #[test]
     fn test_complex_matrix() {
-        let m: Matrix<Complex64> = Matrix::new([
-            [Complex64::new(1.0, 1.0), Complex64::new(2.0, 2.0)],
-            [Complex64::new(3.0, 3.0), Complex64::new(4.0, 4.0)],
+        let m: Matrix<c64> = Matrix::new([
+            [c64::new(1.0, 1.0), c64::new(2.0, 2.0)],
+            [c64::new(3.0, 3.0), c64::new(4.0, 4.0)],
         ]);
 
-        assert_eq!(m[(0, 0)], Complex64::new(1.0, 1.0));
-        assert_eq!(m[(0, 1)], Complex64::new(2.0, 2.0));
+        assert_eq!(m[(0, 0)], c64::new(1.0, 1.0));
+        assert_eq!(m[(0, 1)], c64::new(2.0, 2.0));
     }
 
     #[test]
@@ -217,8 +217,8 @@ mod tests {
 
     #[test]
     fn test_complex_zeros() {
-        let m: Matrix<Complex64> = Matrix::zeros(2, 2);
-        assert_eq!(m[(0, 0)], Complex64::new(0.0, 0.0));
+        let m: Matrix<c64> = Matrix::zeros(2, 2);
+        assert_eq!(m[(0, 0)], c64::new(0.0, 0.0));
     }
 
     #[test]
@@ -229,10 +229,10 @@ mod tests {
 
     #[test]
     fn test_complex_identity() {
-        let m: Matrix<Complex64> = Matrix::identity(2, 2);
-        assert_eq!(m[(0, 0)], Complex64::new(1.0, 0.0));
-        assert_eq!(m[(0, 1)], Complex64::new(0.0, 0.0));
-        assert_eq!(m[(1, 0)], Complex64::new(0.0, 0.0));
-        assert_eq!(m[(1, 1)], Complex64::new(1.0, 0.0));
+        let m: Matrix<c64> = Matrix::identity(2, 2);
+        assert_eq!(m[(0, 0)], c64::new(1.0, 0.0));
+        assert_eq!(m[(0, 1)], c64::new(0.0, 0.0));
+        assert_eq!(m[(1, 0)], c64::new(0.0, 0.0));
+        assert_eq!(m[(1, 1)], c64::new(1.0, 0.0));
     }
 }
