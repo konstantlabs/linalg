@@ -73,6 +73,50 @@ impl SimdOps for f64 {
 }
 
 #[cfg(target_arch = "x86_64")]
+impl SimdOps for u32 {
+    type Vector = __m256i;
+    const LANE_SIZE: usize = 8;
+
+    fn has_simd_support() -> bool {
+        is_x86_feature_detected!("avx2")
+    }
+
+    unsafe fn load(ptr: *const Self) -> Self::Vector {
+        _mm256_loadu_si256(ptr as *const __m256i)
+    }
+
+    unsafe fn store(ptr: *mut Self, vec: Self::Vector) {
+        _mm256_storeu_si256(ptr as *mut __m256i, vec)
+    }
+
+    unsafe fn add(a: Self::Vector, b: Self::Vector) -> Self::Vector {
+        _mm256_add_epi32(a, b)
+    }
+}
+
+#[cfg(target_arch = "x86_64")]
+impl SimdOps for u64 {
+    type Vector = __m256i;
+    const LANE_SIZE: usize = 4;
+
+    fn has_simd_support() -> bool {
+        is_x86_feature_detected!("avx2")
+    }
+
+    unsafe fn load(ptr: *const Self) -> Self::Vector {
+        _mm256_loadu_si256(ptr as *const __m256i)
+    }
+
+    unsafe fn store(ptr: *mut Self, vec: Self::Vector) {
+        _mm256_storeu_si256(ptr as *mut __m256i, vec)
+    }
+
+    unsafe fn add(a: Self::Vector, b: Self::Vector) -> Self::Vector {
+        _mm256_add_epi64(a, b)
+    }
+}
+
+#[cfg(target_arch = "x86_64")]
 impl SimdOps for i32 {
     type Vector = __m256i;
     const LANE_SIZE: usize = 8;
@@ -91,6 +135,28 @@ impl SimdOps for i32 {
 
     unsafe fn add(a: Self::Vector, b: Self::Vector) -> Self::Vector {
         _mm256_add_epi32(a, b)
+    }
+}
+
+#[cfg(target_arch = "x86_64")]
+impl SimdOps for i64 {
+    type Vector = __m256i;
+    const LANE_SIZE: usize = 4;
+
+    fn has_simd_support() -> bool {
+        is_x86_feature_detected!("avx2")
+    }
+
+    unsafe fn load(ptr: *const Self) -> Self::Vector {
+        _mm256_loadu_si256(ptr as *const __m256i)
+    }
+
+    unsafe fn store(ptr: *mut Self, vec: Self::Vector) {
+        _mm256_storeu_si256(ptr as *mut __m256i, vec)
+    }
+
+    unsafe fn add(a: Self::Vector, b: Self::Vector) -> Self::Vector {
+        _mm256_add_epi64(a, b)
     }
 }
 
