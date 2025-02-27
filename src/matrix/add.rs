@@ -13,6 +13,7 @@ trait SimdOps: Sized {
     type Vector;
 
     const LANE_SIZE: usize;
+    const PREFETCH_DISTANCE: usize;
 
     #[cfg(target_arch = "x86_64")]
     unsafe fn load(ptr: *const Self) -> Self::Vector;
@@ -23,6 +24,13 @@ trait SimdOps: Sized {
     #[cfg(target_arch = "x86_64")]
     unsafe fn add(a: Self::Vector, b: Self::Vector) -> Self::Vector;
 
+    #[cfg(target_arch = "x86_64")]
+    unsafe fn prefetch(ptr: *const Self) {
+        // _MM_HINT_T0: Prefetch data into all levels of the cache hierarchy
+        // Other options: _MM_HINT_T1, _MM_HINT_T2 (lower cache levels), _MM_HINT_NTA (non-temporal)
+        _mm_prefetch(ptr as *const i8, _MM_HINT_T0);
+    }
+
     fn has_simd_support() -> bool;
 }
 
@@ -31,6 +39,7 @@ trait SimdOps: Sized {
 impl SimdOps for f32 {
     type Vector = __m256;
     const LANE_SIZE: usize = 8;
+    const PREFETCH_DISTANCE: usize = 4;
 
     fn has_simd_support() -> bool {
         is_x86_feature_detected!("avx2")
@@ -54,6 +63,7 @@ impl SimdOps for f32 {
 impl SimdOps for f64 {
     type Vector = __m256d;
     const LANE_SIZE: usize = 8;
+    const PREFETCH_DISTANCE: usize = 6;
 
     fn has_simd_support() -> bool {
         is_x86_feature_detected!("avx2")
@@ -76,6 +86,7 @@ impl SimdOps for f64 {
 impl SimdOps for u32 {
     type Vector = __m256i;
     const LANE_SIZE: usize = 8;
+    const PREFETCH_DISTANCE: usize = 4;
 
     fn has_simd_support() -> bool {
         is_x86_feature_detected!("avx2")
@@ -98,6 +109,7 @@ impl SimdOps for u32 {
 impl SimdOps for u64 {
     type Vector = __m256i;
     const LANE_SIZE: usize = 4;
+    const PREFETCH_DISTANCE: usize = 6;
 
     fn has_simd_support() -> bool {
         is_x86_feature_detected!("avx2")
@@ -120,6 +132,7 @@ impl SimdOps for u64 {
 impl SimdOps for i32 {
     type Vector = __m256i;
     const LANE_SIZE: usize = 8;
+    const PREFETCH_DISTANCE: usize = 4;
 
     fn has_simd_support() -> bool {
         is_x86_feature_detected!("avx2")
@@ -142,6 +155,7 @@ impl SimdOps for i32 {
 impl SimdOps for i64 {
     type Vector = __m256i;
     const LANE_SIZE: usize = 4;
+    const PREFETCH_DISTANCE: usize = 6;
 
     fn has_simd_support() -> bool {
         is_x86_feature_detected!("avx2")
@@ -164,6 +178,7 @@ impl SimdOps for i64 {
 impl SimdOps for c32 {
     type Vector = (__m256, __m256);
     const LANE_SIZE: usize = 4;
+    const PREFETCH_DISTANCE: usize = 6;
 
     fn has_simd_support() -> bool {
         is_x86_feature_detected!("avx2")
@@ -212,6 +227,7 @@ impl SimdOps for c32 {
 impl SimdOps for c64 {
     type Vector = (__m256d, __m256d);
     const LANE_SIZE: usize = 2;
+    const PREFETCH_DISTANCE: usize = 8;
 
     fn has_simd_support() -> bool {
         is_x86_feature_detected!("avx2")
@@ -324,6 +340,20 @@ where
 
             for i in 0..chunks {
                 let offset = i * T::LANE_SIZE;
+
+                // Prefetch data for future iterations
+                if i + T::PREFETCH_DISTANCE < chunks {
+                    let prefetch_offset = (i + T::PREFETCH_DISTANCE) * T::LANE_SIZE;
+
+                    // Prefetch from both input matrices
+                    T::prefetch(a[prefetch_offset..].as_ptr());
+                    T::prefetch(b[prefetch_offset..].as_ptr());
+
+                    // Optionally prefetch the result location (helpful for store operations)
+                    T::prefetch(r[prefetch_offset..].as_ptr());
+                }
+
+                // Regular SIMD loading, addition, and storing
                 let m1_vec = T::load(a[offset..].as_ptr());
                 let m2_vec = T::load(b[offset..].as_ptr());
                 let sum = <T as SimdOps>::add(m1_vec, m2_vec);
