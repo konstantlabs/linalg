@@ -85,7 +85,7 @@ where
                     T::prefetch(r[prefetch_offset..].as_ptr());
                 }
 
-                // Regular SIMD loading, addition, and storing
+                // Regular SIMD loading, subtraction, and storing
                 let m1_vec = T::load(a[offset..].as_ptr());
                 let m2_vec = T::load(b[offset..].as_ptr());
                 let sum = <T as SimdOps>::sub(m1_vec, m2_vec);
