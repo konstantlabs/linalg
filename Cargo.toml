@@ -16,6 +16,22 @@ harness = false
 path = "tests/benchmarks.rs"
 
 [dependencies]
+aligned-vec = "0.6.1"
+crossbeam-utils = "0.8.21"
 num = "0.4.3"
 num-traits = "0.2.19"
 rand = "0.8.5"
+rayon = "1.10.0"
+
+[profile.bench]
+opt-level = 3
+lto = "fat"
+codegen-units = 1
+debug = true
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1
+panic = "abort"
+strip = true

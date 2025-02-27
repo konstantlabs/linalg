@@ -2,60 +2,599 @@ use std::time::Duration;
 
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 use linalg::matrix::mat::Matrix;
-use linalg::num::{Complex32, Complex64};
+use linalg::num::{c32, c64};
 
-fn add_2x2_matrices(c: &mut Criterion) {
-    let m1: Matrix<i32> = Matrix::new([[1, 2], [3, 4]]);
-    let m2: Matrix<i32> = Matrix::new([[5, 6], [7, 8]]);
+pub fn bench_2x2_matrix_adds(c: &mut Criterion) {
+    let mut group = c.benchmark_group("2x2 Matrix Addition");
 
-    c.bench_function("add 2x2 matrices", |b| {
-        b.iter(|| black_box(&m1) + black_box(&m2))
-    });
+    // i32
+    let m1: Matrix<i32> = Matrix::new([
+        [rand::random(), rand::random()],
+        [rand::random(), rand::random()],
+    ]);
+    let m2: Matrix<i32> = Matrix::new([
+        [rand::random(), rand::random()],
+        [rand::random(), rand::random()],
+    ]);
+    group.bench_function("i32", |b| b.iter(|| black_box(&m1) + black_box(&m2)));
+
+    // f32
+    let m1: Matrix<f32> = Matrix::new([
+        [rand::random(), rand::random()],
+        [rand::random(), rand::random()],
+    ]);
+    let m2: Matrix<f32> = Matrix::new([
+        [rand::random(), rand::random()],
+        [rand::random(), rand::random()],
+    ]);
+    group.bench_function("f32", |b| b.iter(|| black_box(&m1) + black_box(&m2)));
+
+    // f64
+    let m1: Matrix<f64> = Matrix::new([
+        [rand::random(), rand::random()],
+        [rand::random(), rand::random()],
+    ]);
+    let m2: Matrix<f64> = Matrix::new([
+        [rand::random(), rand::random()],
+        [rand::random(), rand::random()],
+    ]);
+    group.bench_function("f64", |b| b.iter(|| black_box(&m1) + black_box(&m2)));
+
+    // c32
+    let m1: Matrix<c32> = Matrix::new([
+        [
+            c32::new(rand::random(), rand::random()),
+            c32::new(rand::random(), rand::random()),
+        ],
+        [
+            c32::new(rand::random(), rand::random()),
+            c32::new(rand::random(), rand::random()),
+        ],
+    ]);
+    let m2: Matrix<c32> = Matrix::new([
+        [
+            c32::new(rand::random(), rand::random()),
+            c32::new(rand::random(), rand::random()),
+        ],
+        [
+            c32::new(rand::random(), rand::random()),
+            c32::new(rand::random(), rand::random()),
+        ],
+    ]);
+    group.bench_function("c32", |b| b.iter(|| black_box(&m1) + black_box(&m2)));
+
+    // c64
+    let m1: Matrix<c64> = Matrix::new([
+        [
+            c64::new(rand::random(), rand::random()),
+            c64::new(rand::random(), rand::random()),
+        ],
+        [
+            c64::new(rand::random(), rand::random()),
+            c64::new(rand::random(), rand::random()),
+        ],
+    ]);
+    let m2: Matrix<c64> = Matrix::new([
+        [
+            c64::new(rand::random(), rand::random()),
+            c64::new(rand::random(), rand::random()),
+        ],
+        [
+            c64::new(rand::random(), rand::random()),
+            c64::new(rand::random(), rand::random()),
+        ],
+    ]);
+    group.bench_function("c64", |b| b.iter(|| black_box(&m1) + black_box(&m2)));
+
+    group.finish();
 }
 
-fn mul_3x3_matrices(c: &mut Criterion) {
-    let m1: Matrix<i32> = Matrix::new([[2, 2, 2], [2, 2, 2], [2, 2, 2]]);
-    let m2: Matrix<i32> = Matrix::new([[2, 2, 2], [2, 2, 2], [2, 2, 2]]);
+pub fn bench_3x3_matrix_adds(c: &mut Criterion) {
+    let mut group = c.benchmark_group("3x3 Matrix Addition");
 
-    c.bench_function("mul 3x3 matrices", |b| {
-        b.iter(|| black_box(&m1) * black_box(&m2))
-    });
+    // i32
+    let m1: Matrix<i32> = Matrix::new([
+        [
+            rand::random::<i32>(),
+            rand::random::<i32>(),
+            rand::random::<i32>(),
+        ],
+        [
+            rand::random::<i32>(),
+            rand::random::<i32>(),
+            rand::random::<i32>(),
+        ],
+        [
+            rand::random::<i32>(),
+            rand::random::<i32>(),
+            rand::random::<i32>(),
+        ],
+    ]);
+    let m2: Matrix<i32> = Matrix::new([
+        [
+            rand::random::<i32>(),
+            rand::random::<i32>(),
+            rand::random::<i32>(),
+        ],
+        [
+            rand::random::<i32>(),
+            rand::random::<i32>(),
+            rand::random::<i32>(),
+        ],
+        [
+            rand::random::<i32>(),
+            rand::random::<i32>(),
+            rand::random::<i32>(),
+        ],
+    ]);
+    group.bench_function("i32", |b| b.iter(|| black_box(&m1) + black_box(&m2)));
+
+    // f32
+    let m1: Matrix<f32> = Matrix::new([
+        [
+            rand::random::<f32>(),
+            rand::random::<f32>(),
+            rand::random::<f32>(),
+        ],
+        [
+            rand::random::<f32>(),
+            rand::random::<f32>(),
+            rand::random::<f32>(),
+        ],
+        [
+            rand::random::<f32>(),
+            rand::random::<f32>(),
+            rand::random::<f32>(),
+        ],
+    ]);
+    let m2: Matrix<f32> = Matrix::new([
+        [
+            rand::random::<f32>(),
+            rand::random::<f32>(),
+            rand::random::<f32>(),
+        ],
+        [
+            rand::random::<f32>(),
+            rand::random::<f32>(),
+            rand::random::<f32>(),
+        ],
+        [
+            rand::random::<f32>(),
+            rand::random::<f32>(),
+            rand::random::<f32>(),
+        ],
+    ]);
+    group.bench_function("f32", |b| b.iter(|| black_box(&m1) + black_box(&m2)));
+
+    // f64
+    let m1: Matrix<f64> = Matrix::new([
+        [
+            rand::random::<f64>(),
+            rand::random::<f64>(),
+            rand::random::<f64>(),
+        ],
+        [
+            rand::random::<f64>(),
+            rand::random::<f64>(),
+            rand::random::<f64>(),
+        ],
+        [
+            rand::random::<f64>(),
+            rand::random::<f64>(),
+            rand::random::<f64>(),
+        ],
+    ]);
+    let m2: Matrix<f64> = Matrix::new([
+        [
+            rand::random::<f64>(),
+            rand::random::<f64>(),
+            rand::random::<f64>(),
+        ],
+        [
+            rand::random::<f64>(),
+            rand::random::<f64>(),
+            rand::random::<f64>(),
+        ],
+        [
+            rand::random::<f64>(),
+            rand::random::<f64>(),
+            rand::random::<f64>(),
+        ],
+    ]);
+    group.bench_function("f64", |b| b.iter(|| black_box(&m1) + black_box(&m2)));
+
+    // c32
+    let m1: Matrix<c32> = Matrix::new([
+        [
+            c32::new(rand::random::<f32>(), rand::random::<f32>()),
+            c32::new(rand::random::<f32>(), rand::random::<f32>()),
+            c32::new(rand::random::<f32>(), rand::random::<f32>()),
+        ],
+        [
+            c32::new(rand::random::<f32>(), rand::random::<f32>()),
+            c32::new(rand::random::<f32>(), rand::random::<f32>()),
+            c32::new(rand::random::<f32>(), rand::random::<f32>()),
+        ],
+        [
+            c32::new(rand::random::<f32>(), rand::random::<f32>()),
+            c32::new(rand::random::<f32>(), rand::random::<f32>()),
+            c32::new(rand::random::<f32>(), rand::random::<f32>()),
+        ],
+    ]);
+    let m2: Matrix<c32> = Matrix::new([
+        [
+            c32::new(rand::random::<f32>(), rand::random::<f32>()),
+            c32::new(rand::random::<f32>(), rand::random::<f32>()),
+            c32::new(rand::random::<f32>(), rand::random::<f32>()),
+        ],
+        [
+            c32::new(rand::random::<f32>(), rand::random::<f32>()),
+            c32::new(rand::random::<f32>(), rand::random::<f32>()),
+            c32::new(rand::random::<f32>(), rand::random::<f32>()),
+        ],
+        [
+            c32::new(rand::random::<f32>(), rand::random::<f32>()),
+            c32::new(rand::random::<f32>(), rand::random::<f32>()),
+            c32::new(rand::random::<f32>(), rand::random::<f32>()),
+        ],
+    ]);
+    group.bench_function("c32", |b| b.iter(|| black_box(&m1) + black_box(&m2)));
+
+    // c64
+    let m1: Matrix<c64> = Matrix::new([
+        [
+            c64::new(rand::random::<f64>(), rand::random::<f64>()),
+            c64::new(rand::random::<f64>(), rand::random::<f64>()),
+            c64::new(rand::random::<f64>(), rand::random::<f64>()),
+        ],
+        [
+            c64::new(rand::random::<f64>(), rand::random::<f64>()),
+            c64::new(rand::random::<f64>(), rand::random::<f64>()),
+            c64::new(rand::random::<f64>(), rand::random::<f64>()),
+        ],
+        [
+            c64::new(rand::random::<f64>(), rand::random::<f64>()),
+            c64::new(rand::random::<f64>(), rand::random::<f64>()),
+            c64::new(rand::random::<f64>(), rand::random::<f64>()),
+        ],
+    ]);
+    let m2: Matrix<c64> = Matrix::new([
+        [
+            c64::new(rand::random::<f64>(), rand::random::<f64>()),
+            c64::new(rand::random::<f64>(), rand::random::<f64>()),
+            c64::new(rand::random::<f64>(), rand::random::<f64>()),
+        ],
+        [
+            c64::new(rand::random::<f64>(), rand::random::<f64>()),
+            c64::new(rand::random::<f64>(), rand::random::<f64>()),
+            c64::new(rand::random::<f64>(), rand::random::<f64>()),
+        ],
+        [
+            c64::new(rand::random::<f64>(), rand::random::<f64>()),
+            c64::new(rand::random::<f64>(), rand::random::<f64>()),
+            c64::new(rand::random::<f64>(), rand::random::<f64>()),
+        ],
+    ]);
+    group.bench_function("c64", |b| b.iter(|| black_box(&m1) + black_box(&m2)));
+
+    group.finish();
 }
 
-fn mul_512x512_matrices(c: &mut Criterion) {
+pub fn bench_1024x1024_matrix_adds(c: &mut Criterion) {
+    let mut group = c.benchmark_group("1024x1024 Matrix Addition");
     use rand::{thread_rng, Rng};
     let mut rng = thread_rng();
-    let m1: Matrix<i32> = Matrix::new([[rng.gen_range(-100..100); 512]; 512]);
-    let m2: Matrix<i32> = Matrix::new([[rng.gen_range(-100..100); 512]; 512]);
 
-    c.bench_function("mul 512x512 matrices", |b| {
-        b.iter(|| black_box(&m1) * black_box(&m2))
-    });
+    // f32
+    {
+        let data1: Vec<f32> = (0..1024 * 1024)
+            .map(|_| rng.gen_range(-100.0..100.0))
+            .collect();
+        let data2: Vec<f32> = (0..1024 * 1024)
+            .map(|_| rng.gen_range(-100.0..100.0))
+            .collect();
+
+        let m1: Matrix<f32> = Matrix::from_vec(1024, 1024, data1);
+        let m2: Matrix<f32> = Matrix::from_vec(1024, 1024, data2);
+
+        group.bench_function("f32", |b| b.iter(|| black_box(&m1) + black_box(&m2)));
+    }
+
+    // f64
+    {
+        let data1: Vec<f64> = (0..1024 * 1024)
+            .map(|_| rng.gen_range(-100.0..100.0))
+            .collect();
+        let data2: Vec<f64> = (0..1024 * 1024)
+            .map(|_| rng.gen_range(-100.0..100.0))
+            .collect();
+
+        let m1: Matrix<f64> = Matrix::from_vec(1024, 1024, data1);
+        let m2: Matrix<f64> = Matrix::from_vec(1024, 1024, data2);
+
+        group.bench_function("f64", |b| b.iter(|| black_box(&m1) + black_box(&m2)));
+    }
+
+    // i32
+    {
+        let data1: Vec<i32> = (0..1024 * 1024).map(|_| rng.gen_range(-100..100)).collect();
+        let data2: Vec<i32> = (0..1024 * 1024).map(|_| rng.gen_range(-100..100)).collect();
+
+        let m1: Matrix<i32> = Matrix::from_vec(1024, 1024, data1);
+        let m2: Matrix<i32> = Matrix::from_vec(1024, 1024, data2);
+
+        group.bench_function("i32", |b| b.iter(|| black_box(&m1) + black_box(&m2)));
+    }
+
+    // c32
+    {
+        let data1: Vec<c32> = (0..1024 * 1024)
+            .map(|_| c32::new(rng.gen_range(-100.0..100.0), rng.gen_range(-100.0..100.0)))
+            .collect();
+        let data2: Vec<c32> = (0..1024 * 1024)
+            .map(|_| c32::new(rng.gen_range(-100.0..100.0), rng.gen_range(-100.0..100.0)))
+            .collect();
+
+        let m1: Matrix<c32> = Matrix::from_vec(1024, 1024, data1);
+        let m2: Matrix<c32> = Matrix::from_vec(1024, 1024, data2);
+
+        group.bench_function("c32", |b| b.iter(|| black_box(&m1) + black_box(&m2)));
+    }
+
+    // c64
+    {
+        let data1: Vec<c64> = (0..1024 * 1024)
+            .map(|_| c64::new(rng.gen_range(-100.0..100.0), rng.gen_range(-100.0..100.0)))
+            .collect();
+        let data2: Vec<c64> = (0..1024 * 1024)
+            .map(|_| c64::new(rng.gen_range(-100.0..100.0), rng.gen_range(-100.0..100.0)))
+            .collect();
+
+        let m1: Matrix<c64> = Matrix::from_vec(1024, 1024, data1);
+        let m2: Matrix<c64> = Matrix::from_vec(1024, 1024, data2);
+
+        group.bench_function("c64", |b| b.iter(|| black_box(&m1) + black_box(&m2)));
+    }
+
+    group.finish();
 }
 
-fn mul_3x3_complex32_matrices(c: &mut Criterion) {
-    let m1: Matrix<Complex32> = Matrix::new([[Complex32::new(2.0, 0.0); 3]; 3]);
-    let m2: Matrix<Complex32> = Matrix::new([[Complex32::new(2.0, 0.0); 3]; 3]);
+pub fn bench_3x3_matrix_muls(c: &mut Criterion) {
+    let mut group = c.benchmark_group("3x3 Matrix Multiplication");
 
-    c.bench_function("mul 3x3 complex32 matrices", |b| {
-        b.iter(|| black_box(&m1) * black_box(&m2))
-    });
-}
+    // i32
+    let m1: Matrix<i32> = Matrix::new([
+        [
+            rand::random::<i32>(),
+            rand::random::<i32>(),
+            rand::random::<i32>(),
+        ],
+        [
+            rand::random::<i32>(),
+            rand::random::<i32>(),
+            rand::random::<i32>(),
+        ],
+        [
+            rand::random::<i32>(),
+            rand::random::<i32>(),
+            rand::random::<i32>(),
+        ],
+    ]);
+    let m2: Matrix<i32> = Matrix::new([
+        [
+            rand::random::<i32>(),
+            rand::random::<i32>(),
+            rand::random::<i32>(),
+        ],
+        [
+            rand::random::<i32>(),
+            rand::random::<i32>(),
+            rand::random::<i32>(),
+        ],
+        [
+            rand::random::<i32>(),
+            rand::random::<i32>(),
+            rand::random::<i32>(),
+        ],
+    ]);
+    group.bench_function("i32", |b| b.iter(|| black_box(&m1) * black_box(&m2)));
 
-fn mul_3x3_complex64_matrices(c: &mut Criterion) {
-    let m1: Matrix<Complex64> = Matrix::new([[Complex64::new(2.0, 0.0); 3]; 3]);
-    let m2: Matrix<Complex64> = Matrix::new([[Complex64::new(2.0, 0.0); 3]; 3]);
+    // i64
+    let m1: Matrix<i64> = Matrix::new([
+        [
+            rand::random::<i64>(),
+            rand::random::<i64>(),
+            rand::random::<i64>(),
+        ],
+        [
+            rand::random::<i64>(),
+            rand::random::<i64>(),
+            rand::random::<i64>(),
+        ],
+        [
+            rand::random::<i64>(),
+            rand::random::<i64>(),
+            rand::random::<i64>(),
+        ],
+    ]);
+    let m2: Matrix<i64> = Matrix::new([
+        [
+            rand::random::<i64>(),
+            rand::random::<i64>(),
+            rand::random::<i64>(),
+        ],
+        [
+            rand::random::<i64>(),
+            rand::random::<i64>(),
+            rand::random::<i64>(),
+        ],
+        [
+            rand::random::<i64>(),
+            rand::random::<i64>(),
+            rand::random::<i64>(),
+        ],
+    ]);
+    group.bench_function("i64", |b| b.iter(|| black_box(&m1) * black_box(&m2)));
 
-    c.bench_function("mul 3x3 complex64 matrices", |b| {
-        b.iter(|| black_box(&m1) * black_box(&m2))
-    });
+    // f32
+    let m1: Matrix<f32> = Matrix::new([
+        [
+            rand::random::<f32>(),
+            rand::random::<f32>(),
+            rand::random::<f32>(),
+        ],
+        [
+            rand::random::<f32>(),
+            rand::random::<f32>(),
+            rand::random::<f32>(),
+        ],
+        [
+            rand::random::<f32>(),
+            rand::random::<f32>(),
+            rand::random::<f32>(),
+        ],
+    ]);
+    let m2: Matrix<f32> = Matrix::new([
+        [
+            rand::random::<f32>(),
+            rand::random::<f32>(),
+            rand::random::<f32>(),
+        ],
+        [
+            rand::random::<f32>(),
+            rand::random::<f32>(),
+            rand::random::<f32>(),
+        ],
+        [
+            rand::random::<f32>(),
+            rand::random::<f32>(),
+            rand::random::<f32>(),
+        ],
+    ]);
+    group.bench_function("f32", |b| b.iter(|| black_box(&m1) * black_box(&m2)));
+
+    // f64
+    let m1: Matrix<f64> = Matrix::new([
+        [
+            rand::random::<f64>(),
+            rand::random::<f64>(),
+            rand::random::<f64>(),
+        ],
+        [
+            rand::random::<f64>(),
+            rand::random::<f64>(),
+            rand::random::<f64>(),
+        ],
+        [
+            rand::random::<f64>(),
+            rand::random::<f64>(),
+            rand::random::<f64>(),
+        ],
+    ]);
+    let m2: Matrix<f64> = Matrix::new([
+        [
+            rand::random::<f64>(),
+            rand::random::<f64>(),
+            rand::random::<f64>(),
+        ],
+        [
+            rand::random::<f64>(),
+            rand::random::<f64>(),
+            rand::random::<f64>(),
+        ],
+        [
+            rand::random::<f64>(),
+            rand::random::<f64>(),
+            rand::random::<f64>(),
+        ],
+    ]);
+    group.bench_function("f64", |b| b.iter(|| black_box(&m1) * black_box(&m2)));
+
+    // c32
+    let m1: Matrix<c32> = Matrix::new([
+        [
+            c32::new(rand::random::<f32>(), rand::random::<f32>()),
+            c32::new(rand::random::<f32>(), rand::random::<f32>()),
+            c32::new(rand::random::<f32>(), rand::random::<f32>()),
+        ],
+        [
+            c32::new(rand::random::<f32>(), rand::random::<f32>()),
+            c32::new(rand::random::<f32>(), rand::random::<f32>()),
+            c32::new(rand::random::<f32>(), rand::random::<f32>()),
+        ],
+        [
+            c32::new(rand::random::<f32>(), rand::random::<f32>()),
+            c32::new(rand::random::<f32>(), rand::random::<f32>()),
+            c32::new(rand::random::<f32>(), rand::random::<f32>()),
+        ],
+    ]);
+    let m2: Matrix<c32> = Matrix::new([
+        [
+            c32::new(rand::random::<f32>(), rand::random::<f32>()),
+            c32::new(rand::random::<f32>(), rand::random::<f32>()),
+            c32::new(rand::random::<f32>(), rand::random::<f32>()),
+        ],
+        [
+            c32::new(rand::random::<f32>(), rand::random::<f32>()),
+            c32::new(rand::random::<f32>(), rand::random::<f32>()),
+            c32::new(rand::random::<f32>(), rand::random::<f32>()),
+        ],
+        [
+            c32::new(rand::random::<f32>(), rand::random::<f32>()),
+            c32::new(rand::random::<f32>(), rand::random::<f32>()),
+            c32::new(rand::random::<f32>(), rand::random::<f32>()),
+        ],
+    ]);
+    group.bench_function("c32", |b| b.iter(|| black_box(&m1) * black_box(&m2)));
+
+    // c64
+    let m1: Matrix<c64> = Matrix::new([
+        [
+            c64::new(rand::random::<f64>(), rand::random::<f64>()),
+            c64::new(rand::random::<f64>(), rand::random::<f64>()),
+            c64::new(rand::random::<f64>(), rand::random::<f64>()),
+        ],
+        [
+            c64::new(rand::random::<f64>(), rand::random::<f64>()),
+            c64::new(rand::random::<f64>(), rand::random::<f64>()),
+            c64::new(rand::random::<f64>(), rand::random::<f64>()),
+        ],
+        [
+            c64::new(rand::random::<f64>(), rand::random::<f64>()),
+            c64::new(rand::random::<f64>(), rand::random::<f64>()),
+            c64::new(rand::random::<f64>(), rand::random::<f64>()),
+        ],
+    ]);
+    let m2: Matrix<c64> = Matrix::new([
+        [
+            c64::new(rand::random::<f64>(), rand::random::<f64>()),
+            c64::new(rand::random::<f64>(), rand::random::<f64>()),
+            c64::new(rand::random::<f64>(), rand::random::<f64>()),
+        ],
+        [
+            c64::new(rand::random::<f64>(), rand::random::<f64>()),
+            c64::new(rand::random::<f64>(), rand::random::<f64>()),
+            c64::new(rand::random::<f64>(), rand::random::<f64>()),
+        ],
+        [
+            c64::new(rand::random::<f64>(), rand::random::<f64>()),
+            c64::new(rand::random::<f64>(), rand::random::<f64>()),
+            c64::new(rand::random::<f64>(), rand::random::<f64>()),
+        ],
+    ]);
+    group.bench_function("c64", |b| b.iter(|| black_box(&m1) * black_box(&m2)));
+
+    group.finish();
 }
 
 criterion_group! {
     name = benches;
     config = Criterion::default().measurement_time(Duration::from_secs(30));
-    // targets = add_2x2_matrices, mul_3x3_matrices, mul_3x3_complex32_matrices, mul_3x3_complex64_matrices, mul_512x512_matrices
-    targets = mul_512x512_matrices
+    targets =
+        bench_2x2_matrix_adds,
+        bench_3x3_matrix_adds,
+        bench_1024x1024_matrix_adds,
+        bench_3x3_matrix_muls,
 }
 
 criterion_main!(benches);
