@@ -48,7 +48,7 @@ where
 }
 
 #[cfg(target_arch = "x86_64")]
-unsafe fn sub_simd<T>(m1: &Matrix<T>, m2: &Matrix<T>) -> Matrix<T>
+pub unsafe fn sub_simd<T>(m1: &Matrix<T>, m2: &Matrix<T>) -> Matrix<T>
 where
     T: Clone
         + Add<Output = T>

@@ -78,6 +78,24 @@ where
         )
     }
 
+    pub fn submatrix(
+        &self,
+        row_start: usize,
+        col_start: usize,
+        rows: usize,
+        cols: usize,
+    ) -> Matrix<T> {
+        let mut result = Matrix::empty(rows, cols);
+
+        for i in 0..rows {
+            for j in 0..cols {
+                result[(i, j)] = self[(row_start + i, col_start + j)].clone();
+            }
+        }
+
+        result
+    }
+
     pub fn get(&self, row: usize, col: usize) -> &T {
         &self.data[row * self.cols + col]
     }
