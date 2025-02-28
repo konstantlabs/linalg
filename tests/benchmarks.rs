@@ -1321,5 +1321,5 @@ criterion_main!(
     large_matrix_addition,
     small_matrix_subtraction,
     small_matrix_multiplication,
-    // large_matrix_multiplication
+    large_matrix_multiplication
 );
