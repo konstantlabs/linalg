@@ -20,6 +20,7 @@ where
 {
     pub fn new<const R: usize, const C: usize>(data: [[T; C]; R]) -> Self {
         let vec: Vec<T> = data.into_iter().flatten().collect();
+
         Matrix {
             rows: R,
             cols: C,

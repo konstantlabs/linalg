@@ -62,7 +62,7 @@ impl SimdOps for f32 {
 #[cfg(target_arch = "x86_64")]
 impl SimdOps for f64 {
     type Vector = __m256d;
-    const LANE_SIZE: usize = 8;
+    const LANE_SIZE: usize = 4;
     const PREFETCH_DISTANCE: usize = 6;
 
     fn has_simd_support() -> bool {
