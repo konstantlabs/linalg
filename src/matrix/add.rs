@@ -60,8 +60,8 @@ where
         + Sync,
 {
     let total_elements = m1.rows * m1.cols;
-    let mut result = Vec::with_capacity(total_elements);
-    result.set_len(total_elements);
+
+    let mut result = vec![T::default(); total_elements];
 
     result
         .par_chunks_mut(T::LANE_SIZE * 128)
